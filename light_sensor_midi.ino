@@ -4,15 +4,16 @@
 //Uncomment the line below to enable the serial port for debugging. Comment it out to disable the serial output. NOTE: MIDI will not output in debugging mode because the serial port interferes with it.
 //#define SERIAL_DEBUG (1)
 
-#define SENSOR_VALUE_THRESHOLD (300) //The phototransistor seems to produce values in the 350+ range when covered up
 #define LOOP_SLEEP_MS (200) // Milliseconds to sleep/delay at the end of each loop iteration.
-#define NUM_SENSORS (1)
+#define NUM_SENSORS (4)
 #define NUM_POS_ACTIONS (10)
 #define NUM_NEG_ACTIONS (10)
 #define DEFAULT_PITCH (pitchC3)
 #define DEFAULT_VELOCITY (100)
 
-const byte sensor_pins[NUM_SENSORS] = {0};
+const byte sensor_pins[NUM_SENSORS] = {0, 1, 2, 3};
+const int sensor_thresholds[NUM_SENSORS] = {100, 150, 150, 150}; //Used in case the sensors read different values for the same light level
+
 int velocity = DEFAULT_VELOCITY;
 byte pitch = DEFAULT_PITCH;
 byte channel = 0; //MIDI channel to output on. I'm not sure what happens if you change this.
@@ -23,8 +24,8 @@ byte pos_idx = 0;
 byte neg_idx = 0;
 
 int sensor_vals[NUM_SENSORS];
-int prev_sensors_covered = 0;
-int curr_sensors_covered = 0;
+int prev_sensors_active = 0;
+int curr_sensors_active = 0;
 
 void setup() {
 #ifdef SERIAL_DEBUG
@@ -37,6 +38,7 @@ void setup() {
 
   //Initialize the sensor values to a known value (0)
   for (int i = 0; i < NUM_SENSORS; i++) {
+    //pinMode ( sensor_pins[i], INPUT_PULLUP );
     sensor_vals[i] = 0;
   }
 }
@@ -50,10 +52,10 @@ void read_values() {
   }
 }
 
-int num_sensors_covered() {
+int num_sensors_active() {
   int count = 0;
   for (int i = 0; i < NUM_SENSORS; i++) {
-    if (sensor_vals[i] > SENSOR_VALUE_THRESHOLD) {
+    if (sensor_vals[i] < sensor_thresholds[i]) {
       count += 1;
     }
   }
@@ -79,12 +81,12 @@ void play_midi_note() {
 
 void loop() {
   read_values();
-  curr_sensors_covered = num_sensors_covered();
+  curr_sensors_active = num_sensors_active();
 #ifdef SERIAL_DEBUG
-  Serial.print("Previous num covered: "); Serial.print(prev_sensors_covered); Serial.print(". Current num covered: "); Serial.println(curr_sensors_covered);
+  Serial.print("Previous num covered: "); Serial.print(prev_sensors_active); Serial.print(". Current num covered: "); Serial.println(curr_sensors_active);
 #endif
 
-  if (curr_sensors_covered > prev_sensors_covered) {
+  if (curr_sensors_active > prev_sensors_active) {
 #ifdef SERIAL_DEBUG
     Serial.println("Sending positive action");
 #endif
@@ -93,7 +95,7 @@ void loop() {
     pos_idx = (pos_idx + 1) % NUM_POS_ACTIONS;
     play_midi_note();
   } 
-  else if (curr_sensors_covered < prev_sensors_covered) {
+  else if (curr_sensors_active < prev_sensors_active) {
 #ifdef SERIAL_DEBUG
     Serial.println("Sending negative action");
 #endif
@@ -103,7 +105,7 @@ void loop() {
   }
   //Note that there is no final else here, because if the number of sensors covered is unchanged we should do nothing
 
-  prev_sensors_covered = curr_sensors_covered;
+  prev_sensors_active = curr_sensors_active;
   delay(LOOP_SLEEP_MS);
 }
 
