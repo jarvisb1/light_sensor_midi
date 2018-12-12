@@ -6,20 +6,20 @@
 
 #define LOOP_SLEEP_MS (200) // Milliseconds to sleep/delay at the end of each loop iteration.
 #define NUM_SENSORS (4)
-#define NUM_POS_ACTIONS (10)
-#define NUM_NEG_ACTIONS (10)
+#define NUM_POS_ACTIONS (5)
+#define NUM_NEG_ACTIONS (4)
 #define DEFAULT_PITCH (pitchC3)
 #define DEFAULT_VELOCITY (100)
 
 const byte sensor_pins[NUM_SENSORS] = {0, 1, 2, 3};
-const int sensor_thresholds[NUM_SENSORS] = {100, 150, 150, 150}; //Used in case the sensors read different values for the same light level
+const int sensor_thresholds[NUM_SENSORS] = {70, 70, 70, 70}; //Used in case the sensors read different values for the same light level
 
 int velocity = DEFAULT_VELOCITY;
 byte pitch = DEFAULT_PITCH;
 byte channel = 0; //MIDI channel to output on. I'm not sure what happens if you change this.
 
-byte pos_actions[NUM_POS_ACTIONS] = {60, 62, 64, 66, 68, 70, 72, 74, 76, 78};
-byte neg_actions[NUM_NEG_ACTIONS] = {48, 46, 44, 42, 40, 38, 36, 34, 32, 30};
+byte pos_actions[NUM_POS_ACTIONS] = {60, 62, 64, 66, 68};
+byte neg_actions[NUM_NEG_ACTIONS] = {48, 46, 44, 42};
 byte pos_idx = 0;
 byte neg_idx = 0;
 
